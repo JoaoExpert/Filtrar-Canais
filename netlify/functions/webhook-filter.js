@@ -1,6 +1,6 @@
 exports.handler = async (event, context) => {
   // URL do seu webhook do Make
-  const MAKE_WEBHOOK_URL = 'https://n8n.joaog.tech/webhook-test/fadfdb74-1fa3-49b6-a082-a217abc057f3';
+  const MAKE_WEBHOOK_URL = 'https://hook.us2.make.com/k2vb52pvrs3gi5p7fg8z9ew0m029zpbd';
   
   // Nome do canal que você quer receber
   const CANAL_PERMITIDO = 'WhatsApp Unimed Provisório (NÃO UTILIZAR)';
