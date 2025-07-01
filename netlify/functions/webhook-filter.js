@@ -1,6 +1,6 @@
 exports.handler = async (event, context) => {
-  // URL do seu webhook do Make
-  const MAKE_WEBHOOK_URL = 'https://hook.us2.make.com/k2vb52pvrs3gi5p7fg8z9ew0m029zpbd';
+  // URL do seu webhook do N8n
+  const N8N_WEBHOOK_URL = 'https://n8n.joaog.tech/webhook-test/df247691-ea33-4486-a8b6-175a43f289f1';
   
   // Nome do canal que você quer receber
   const CANAL_PERMITIDO = 'WhatsApp Unimed Provisório (NÃO UTILIZAR)';
@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
     // Parse dos dados recebidos do Suri
     const data = JSON.parse(event.body);
     
-    // Extrair informações do canal 
+    // Extrair informações do canal (agora sabemos onde está!)
     const canalId = data.payload?.channel?.Id;
     const canalNome = data.payload?.channel?.Name || 'Não informado';
     const usuarioNome = data.payload?.user?.Name || 'Não informado';
@@ -37,14 +37,14 @@ exports.handler = async (event, context) => {
     // Verificar se é do canal específico (comparando pelo NOME)
     if (canalNome === CANAL_PERMITIDO) {
       
-      console.log('✅ Canal permitido! Enviando para o Make...');
+      console.log('✅ Canal permitido! Enviando para o N8n...');
       console.log(`📤 Canal: ${canalNome}`);
       console.log(`🆔 ID: ${canalId}`);
       console.log(`👤 Usuário: ${usuarioNome}`);
       console.log(`💬 Mensagem: ${mensagem}`);
       
-      // Reenviar para o Make
-      const response = await fetch(MAKE_WEBHOOK_URL, {
+      // Reenviar para o N8n
+      const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ exports.handler = async (event, context) => {
       });
       
       if (response.ok) {
-        console.log('✅ Enviado com sucesso para o Make');
+        console.log('✅ Enviado com sucesso para o N8n');
         return {
           statusCode: 200,
           headers: {
@@ -61,17 +61,17 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({ 
             success: true,
-            message: 'Webhook processado e enviado para Make',
+            message: 'Webhook processado e enviado para N8n',
             canal: canalNome,
             canalId: canalId,
             usuario: usuarioNome
           })
         };
       } else {
-        console.error('❌ Erro ao enviar para o Make:', response.status);
+        console.error('❌ Erro ao enviar para o N8n:', response.status);
         return {
           statusCode: 500,
-          body: JSON.stringify({ error: 'Erro ao enviar para o Make' })
+          body: JSON.stringify({ error: 'Erro ao enviar para o N8n' })
         };
       }
       
