@@ -1,6 +1,7 @@
 exports.handler = async (event, context) => {
-  // URL do seu webhook do Make
+  // URLs dos seus webhooks
   const MAKE_WEBHOOK_URL = 'https://hook.us2.make.com/k2vb52pvrs3gi5p7fg8z9ew0m029zpbd';
+  const N8N_WEBHOOK_URL = 'https://n8n.joaog.tech/webhook-test/df247691-ea33-4486-a8b6-175a43f289f1';
   
   // Nome do canal que você quer receber
   const CANAL_PERMITIDO = 'WhatsApp Unimed Provisório (NÃO UTILIZAR)';
@@ -37,23 +38,40 @@ exports.handler = async (event, context) => {
     // Verificar se é do canal específico (comparando pelo NOME)
     if (canalNome === CANAL_PERMITIDO) {
       
-      console.log('✅ Canal permitido! Enviando para o Make...');
+      console.log('✅ Canal permitido! Enviando para Make e N8n...');
       console.log(`📤 Canal: ${canalNome}`);
       console.log(`🆔 ID: ${canalId}`);
       console.log(`👤 Usuário: ${usuarioNome}`);
       console.log(`💬 Mensagem: ${mensagem}`);
       
-      // Reenviar para o Make
-      const response = await fetch(MAKE_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
+      // Enviar para ambos os webhooks simultaneamente
+      const [makeResponse, n8nResponse] = await Promise.all([
+        fetch(MAKE_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        }),
+        fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        })
+      ]);
       
-      if (response.ok) {
-        console.log('✅ Enviado com sucesso para o Make');
+      // Verificar o resultado de ambos
+      const makeSuccess = makeResponse.ok;
+      const n8nSuccess = n8nResponse.ok;
+      
+      console.log(`📊 Resultados do envio:`);
+      console.log(`✅ Make: ${makeSuccess ? 'Sucesso' : 'Falhou'} (${makeResponse.status})`);
+      console.log(`✅ N8n: ${n8nSuccess ? 'Sucesso' : 'Falhou'} (${n8nResponse.status})`);
+      
+      if (makeSuccess && n8nSuccess) {
+        console.log('🎉 Enviado com sucesso para AMBOS os webhooks!');
         return {
           statusCode: 200,
           headers: {
@@ -61,17 +79,44 @@ exports.handler = async (event, context) => {
           },
           body: JSON.stringify({ 
             success: true,
-            message: 'Webhook processado e enviado para Make',
+            message: 'Webhook processado e enviado para Make e N8n',
             canal: canalNome,
             canalId: canalId,
-            usuario: usuarioNome
+            usuario: usuarioNome,
+            resultados: {
+              make: 'Sucesso',
+              n8n: 'Sucesso'
+            }
+          })
+        };
+      } else if (makeSuccess || n8nSuccess) {
+        console.log('⚠️ Enviado parcialmente - alguns webhooks falharam');
+        return {
+          statusCode: 207, // Multi-Status
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            success: true,
+            message: 'Webhook enviado parcialmente',
+            canal: canalNome,
+            resultados: {
+              make: makeSuccess ? 'Sucesso' : 'Falhou',
+              n8n: n8nSuccess ? 'Sucesso' : 'Falhou'
+            }
           })
         };
       } else {
-        console.error('❌ Erro ao enviar para o Make:', response.status);
+        console.error('❌ Falha ao enviar para ambos os webhooks');
         return {
           statusCode: 500,
-          body: JSON.stringify({ error: 'Erro ao enviar para o Make' })
+          body: JSON.stringify({ 
+            error: 'Erro ao enviar para ambos os webhooks',
+            resultados: {
+              make: `Falhou (${makeResponse.status})`,
+              n8n: `Falhou (${n8nResponse.status})`
+            }
+          })
         };
       }
       
